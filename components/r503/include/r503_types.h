@@ -108,3 +108,19 @@ typedef enum {
     R503_LED_CYAN   = 0x06,
     R503_LED_WHITE  = 0x07,
 } r503_led_color_t;
+
+typedef struct {
+    uint8_t confirmation_code;
+    uint8_t step;
+    uint16_t finger_id;
+} r503_auto_enroll_step_t;
+
+typedef struct {
+    uint8_t confirmation_code;
+    uint8_t step;
+    uint16_t match_id;
+    uint16_t match_score;
+} r503_auto_identify_step_t;
+
+typedef void (*r503_auto_enroll_callback_t)(const r503_auto_enroll_step_t *event, void *user_ctx);
+typedef void (*r503_auto_identify_callback_t)(const r503_auto_identify_step_t *event, void *user_ctx);

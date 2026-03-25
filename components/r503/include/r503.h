@@ -76,6 +76,26 @@ esp_err_t r503_aura_led_config(r503_t *dev,
                                r503_led_color_t color,
                                uint8_t times);
 
+esp_err_t r503_auto_enroll(r503_t *dev,
+                           uint16_t location_id,
+                           bool allow_override,
+                           bool allow_duplicate,
+                           bool return_step_status,
+                           bool require_finger_leave,
+                           uint16_t *saved_id,
+                           r503_auto_enroll_callback_t cb,
+                           void *user_ctx);
+
+esp_err_t r503_auto_identify(r503_t *dev,
+                             uint8_t security_level,
+                             uint16_t start_id,
+                             uint16_t count,
+                             bool return_step_status,
+                             uint8_t search_error_times,
+                             r503_search_result_t *out,
+                             r503_auto_identify_callback_t cb,
+                             void *user_ctx);
+
 #ifdef __cplusplus
 }
 #endif

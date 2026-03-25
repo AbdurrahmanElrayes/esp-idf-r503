@@ -10,6 +10,20 @@
 
 static const char *TAG = "r503_example";
 
+static void auto_enroll_cb(const r503_auto_enroll_step_t *event, void *user_ctx)
+{
+    (void)user_ctx;
+    ESP_LOGI("auto_enroll", "code=0x%02X step=0x%02X id=%u",
+             event->confirmation_code, event->step, event->finger_id);
+}
+
+static void auto_identify_cb(const r503_auto_identify_step_t *event, void *user_ctx)
+{
+    (void)user_ctx;
+    ESP_LOGI("auto_identify", "code=0x%02X step=0x%02X id=%u score=%u",
+             event->confirmation_code, event->step, event->match_id, event->match_score);
+}
+
 void app_main(void)
 {
     r503_t sensor = {0};
@@ -71,24 +85,41 @@ void app_main(void)
     ESP_ERROR_CHECK(r503_find_next_free_id(&sensor, &next_free_id));
     ESP_LOGI(TAG, "Next free ID   : %u", next_free_id);
 
-    ESP_LOGI(TAG, "Enroll same finger twice now...");
     uint16_t saved_id = 0;
-    err = r503_enroll_manual_next_free(&sensor, &saved_id, 10000, 150);
+    ESP_LOGI(TAG, "Place same finger for AUTO ENROLL...");
+    err = r503_auto_enroll(&sensor,
+                           next_free_id,
+                           false,   /* allow_override */
+                           true,    /* allow_duplicate */
+                           true,    /* return_step_status */
+                           true,    /* require_finger_leave */
+                           &saved_id,
+                           auto_enroll_cb,
+                           NULL);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Enroll failed: %s", r503_err_to_name(err));
+        ESP_LOGE(TAG, "Auto enroll failed: %s", r503_err_to_name(err));
         return;
     }
-    ESP_LOGI(TAG, "Enroll success at ID %u", saved_id);
 
-    ESP_LOGI(TAG, "Place enrolled finger for identify...");
+    ESP_LOGI(TAG, "Auto enroll success at ID %u", saved_id);
+
     r503_search_result_t result = {0};
-    err = r503_identify_once(&sensor, 0, params.capacity, &result);
+    ESP_LOGI(TAG, "Place enrolled finger for AUTO IDENTIFY...");
+    err = r503_auto_identify(&sensor,
+                             3,      /* security level */
+                             0,      /* start id */
+                             200,    /* count */
+                             true,   /* return step status */
+                             1,      /* search error times */
+                             &result,
+                             auto_identify_cb,
+                             NULL);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Identify failed: %s", r503_err_to_name(err));
+        ESP_LOGE(TAG, "Auto identify failed: %s", r503_err_to_name(err));
         return;
     }
 
-    ESP_LOGI(TAG, "MATCH! ID=%u Score=%u", result.match_id, result.match_score);
+    ESP_LOGI(TAG, "AUTO MATCH! ID=%u Score=%u", result.match_id, result.match_score);
 
     while (1) {
         vTaskDelay(pdMS_TO_TICKS(1000));
