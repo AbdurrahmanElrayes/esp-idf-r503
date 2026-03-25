@@ -18,7 +18,7 @@ ESP-IDF example for testing the R503 Aura LED control API.
 
 | R503 Pin | ESP32 |
 |---------|------|
-| VCC     | 5V   |
+| VCC     | 3.3V   |
 | GND     | GND  |
 | TX      | GPIO18 (RX) |
 | RX      | GPIO17 (TX) |

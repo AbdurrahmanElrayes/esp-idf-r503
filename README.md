@@ -1,71 +1,69 @@
-# 📦 esp-idf-r503
+# ESP-IDF R503 Fingerprint Sensor Driver
 
-ESP-IDF component for interfacing with **R503 / R5xx fingerprint sensors** over UART.
+A clean, modular, and production-ready ESP-IDF driver for the R503 fingerprint sensor.
 
-Supports enrollment, identification, template management, device info, and Aura LED control.
+Supports both low-level commands and high-level operations such as enrollment, identification, and LED control.
 
 ---
 
 ## ✨ Features
 
-- ✅ UART communication (ESP-IDF native)
-- ✅ Full packet protocol implementation
-- ✅ Fingerprint enrollment (manual + auto ID allocation)
-- ✅ Fingerprint identification (search)
-
-- ✅ Template management:
+- UART-based communication (native ESP-IDF)
+- Full packet handling (build / parse / checksum)
+- Sensor initialization and verification
+- System parameters and product information
+- Template management:
   - Store
+  - Search
   - Delete
-  - Empty library
-  - Read index table
-  - Find next free ID
-
-- ✅ Device information:
-  - Firmware version
-  - Algorithm version
-  - Product info (sensor type, size, capacity...)
-
-- ✅ Aura LED control (RGB ring)
-
-- ✅ Clean layered API (low-level + high-level)
+  - Count
+  - Index table
+- Manual enrollment and identification
+- Auto enrollment and auto identification (firmware-driven)
+- Aura LED control (RGB effects)
+- Clear error handling (`r503_err_to_name`)
 
 ---
 
-## 🧰 Supported Hardware
+## 📁 Project Structure
 
-- R503  
-- R503-M22  
-- R5xx series (tested on GR192RGB sensor)
-
----
-
-## 🔌 Wiring (ESP32 example)
-
-| R503 Pin | ESP32 |
-|---------|------|
-| VCC     | 5V   |
-| GND     | GND  |
-| TX      | GPIO18 (RX) |
-| RX      | GPIO17 (TX) |
-
-⚠️ Use **5V power** for stable operation.
+```
+components/r503/
+├── include/
+├── src/
+│   ├── r503.c
+│   ├── r503_core.c
+│   ├── r503_packet.c
+│   ├── r503_uart.c
+│   ├── r503_info.c
+│   ├── r503_template.c
+│   ├── r503_highlevel.c
+│   └── r503_led.c
+```
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Add component
+### 1. Add the component
 
-Clone into your project:
+Copy the `r503` folder into your project's:
 
-```bash
+```
 components/
-  r503/
 ```
 
 ---
 
-### 2. Initialize
+### 2. Include in your code
+
+```c
+#include "r503.h"
+```
+
+---
+
+### 3. Initialize the sensor
 
 ```c
 r503_t sensor = {0};
@@ -77,6 +75,8 @@ r503_config_t cfg = {
     .baud_rate = R503_DEFAULT_BAUDRATE,
     .address = R503_DEFAULT_ADDRESS,
     .password = R503_DEFAULT_PASSWORD,
+    .rx_timeout_ms = 1000,
+    .uart_buffer_size = 512,
 };
 
 ESP_ERROR_CHECK(r503_init(&sensor, &cfg));
@@ -86,185 +86,38 @@ ESP_ERROR_CHECK(r503_verify_password(&sensor));
 
 ---
 
-### 3. Enroll (auto ID)
+## 🔌 Wiring
 
-```c
-uint16_t id = 0;
+| R503 Pin | ESP32 |
+|---------|------|
+| VCC     | 3.3V |
+| GND     | GND  |
+| TX      | GPIO18 (RX) |
+| RX      | GPIO17 (TX) |
 
-ESP_ERROR_CHECK(
-    r503_enroll_manual_next_free(&sensor, &id, 10000, 150)
-);
-```
-
----
-
-### 4. Identify
-
-```c
-r503_search_result_t result = {0};
-
-ESP_ERROR_CHECK(
-    r503_identify_once(&sensor, 0, 200, &result)
-);
-
-printf("MATCH ID=%u score=%u\n",
-       result.match_id,
-       result.match_score);
-```
+> ⚠️ Important  
+> The R503 sensor must be powered with **3.3V** when connected directly to ESP32.  
+> Using 5V without proper level shifting may damage the ESP32 GPIO pins.
 
 ---
 
-## 💡 Aura LED Example
+## 📦 Examples
 
-```c
-r503_aura_led_config(&sensor,
-                     R503_LED_BREATHING,
-                     0x40,
-                     R503_LED_BLUE,
-                     0);
-```
-
-### Suggested LED States
-
-| State        | LED |
-|-------------|-----|
-| Idle        | Blue breathing |
-| Finger      | Yellow |
-| Processing  | Purple |
-| Success     | Green |
-| Error       | Red flashing |
+- basic_info
+- manual_enroll_identify
+- auto_enroll_identify
+- aura_led_demo
+- delete_templates
 
 ---
 
-## 🧠 API Overview
+## ⚙️ Requirements
 
-### Lifecycle
-
-```c
-r503_init()
-r503_deinit()
-```
+- ESP-IDF v5.x or newer
+- ESP32 (or compatible target with UART support)
 
 ---
 
-### Core Commands
+## 📄 License
 
-```c
-r503_handshake()
-r503_check_sensor()
-r503_verify_password()
-r503_wait_ready()
-```
-
----
-
-### Image / Feature
-
-```c
-r503_get_image()
-r503_get_image_ex()
-r503_gen_char()
-r503_reg_model()
-```
-
----
-
-### Template Management
-
-```c
-r503_store()
-r503_search()
-r503_delete()
-r503_empty_library()
-```
-
----
-
-### Index / Allocation
-
-```c
-r503_read_index_table()
-r503_find_next_free_id()
-```
-
----
-
-### High-Level
-
-```c
-r503_enroll_manual()
-r503_enroll_manual_next_free()
-r503_identify_once()
-```
-
----
-
-### Device Info
-
-```c
-r503_read_sys_params()
-r503_template_count()
-r503_get_fw_version()
-r503_get_alg_version()
-r503_read_product_info()
-```
-
----
-
-### LED
-
-```c
-r503_aura_led_config()
-```
-
----
-
-## ⚠️ Notes
-
-- Search returns **first matching ID**, not the last enrolled.
-- Some firmware versions return **shorter product info payload** (handled internally).
-- Index table bit order is **LSB-first** (verified in practice).
-- Aura LED behavior may vary depending on hardware variant.
-
----
-
-## 📁 Project Structure
-
-```
-components/r503/
-  include/
-  src/
-main/
-  main.c (example)
-```
-
----
-
-## 🛠️ Future Improvements
-
-- Auto-enroll command (0x31)
-- Auto-identify command (0x32)
-- Image upload support
-- Async API (event-driven)
-- Multiple UART instances
-- ESPHome / Home Assistant integration
-
----
-
-## 📜 License
-
-This project is licensed under the Apache License 2.0.
-
-See the [LICENSE](LICENSE) file for details.
-
----
-
-## 🤝 Contributing
-
-PRs and improvements are welcome.
-
----
-
-## ⭐ Acknowledgment
-
-Based on R503 protocol documentation and real device testing.
+Apache License 2.0

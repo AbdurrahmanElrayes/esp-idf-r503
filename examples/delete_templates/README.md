@@ -1,17 +1,17 @@
-# basic_info
+# delete_templates
 
-Basic ESP-IDF example for reading R503 sensor information.
+ESP-IDF example for clearing fingerprint templates from the R503 sensor.
 
 ## What it does
 
 - Initializes the sensor
-- Performs handshake
-- Verifies password
-- Reads system parameters
-- Reads template count
-- Reads firmware version
-- Reads algorithm version
-- Reads product information
+- Reads current template count
+- Deletes all templates
+- Verifies that the library is empty
+
+## Warning
+
+This example permanently deletes all stored fingerprints.
 
 ## Wiring
 

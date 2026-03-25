@@ -17,7 +17,7 @@ Manual ESP-IDF example for fingerprint enrollment and identification using the R
 
 | R503 Pin | ESP32 |
 |---------|------|
-| VCC     | 5V   |
+| VCC     | 3.3V   |
 | GND     | GND  |
 | TX      | GPIO18 (RX) |
 | RX      | GPIO17 (TX) |
