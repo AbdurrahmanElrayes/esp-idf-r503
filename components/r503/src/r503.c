@@ -295,3 +295,136 @@ const char *r503_err_to_name(esp_err_t err)
         default:                          return esp_err_to_name(err);
     }
 }
+
+esp_err_t r503_get_image(r503_t *dev)
+{
+    ESP_RETURN_ON_ERROR(r503_check_dev(dev), TAG, "invalid device");
+    ESP_RETURN_ON_ERROR(r503_send_command(dev, R503_CMD_GET_IMAGE, NULL, 0), TAG, "send get image failed");
+
+    r503_packet_t ack = {0};
+    uint8_t code = 0;
+    ESP_RETURN_ON_ERROR(r503_read_ack(dev, &ack, &code), TAG, "read get image ack failed");
+
+    return r503_map_confirm_code(code);
+}
+
+esp_err_t r503_get_image_ex(r503_t *dev)
+{
+    ESP_RETURN_ON_ERROR(r503_check_dev(dev), TAG, "invalid device");
+    ESP_RETURN_ON_ERROR(r503_send_command(dev, R503_CMD_GET_IMAGE_EX, NULL, 0), TAG, "send get image ex failed");
+
+    r503_packet_t ack = {0};
+    uint8_t code = 0;
+    ESP_RETURN_ON_ERROR(r503_read_ack(dev, &ack, &code), TAG, "read get image ex ack failed");
+
+    return r503_map_confirm_code(code);
+}
+
+esp_err_t r503_gen_char(r503_t *dev, uint8_t buffer_id)
+{
+    ESP_RETURN_ON_ERROR(r503_check_dev(dev), TAG, "invalid device");
+    ESP_RETURN_ON_FALSE(buffer_id >= 1 && buffer_id <= 6, ESP_ERR_INVALID_ARG, TAG, "buffer_id must be 1..6");
+
+    uint8_t params[1] = { buffer_id };
+
+    ESP_RETURN_ON_ERROR(r503_send_command(dev, R503_CMD_GEN_CHAR, params, sizeof(params)),
+                        TAG, "send gen char failed");
+
+    r503_packet_t ack = {0};
+    uint8_t code = 0;
+    ESP_RETURN_ON_ERROR(r503_read_ack(dev, &ack, &code), TAG, "read gen char ack failed");
+
+    return r503_map_confirm_code(code);
+}
+
+esp_err_t r503_template_count(r503_t *dev, uint16_t *count)
+{
+    ESP_RETURN_ON_ERROR(r503_check_dev(dev), TAG, "invalid device");
+    ESP_RETURN_ON_FALSE(count != NULL, ESP_ERR_INVALID_ARG, TAG, "count is NULL");
+
+    ESP_RETURN_ON_ERROR(r503_send_command(dev, R503_CMD_TEMPLATE_NUM, NULL, 0),
+                        TAG, "send template count failed");
+
+    r503_packet_t ack = {0};
+    uint8_t code = 0;
+    ESP_RETURN_ON_ERROR(r503_read_ack(dev, &ack, &code), TAG, "read template count ack failed");
+
+    esp_err_t mapped = r503_map_confirm_code(code);
+    ESP_RETURN_ON_ERROR(mapped, TAG, "module returned error 0x%02X", code);
+
+    const uint16_t payload_len = r503_packet_payload_len(&ack);
+    ESP_RETURN_ON_FALSE(payload_len == 3, ESP_ERR_R503_PROTOCOL, TAG, "unexpected template count payload len: %u", payload_len);
+
+    *count = be16_from_payload(&ack.payload[1]);
+    return ESP_OK;
+}
+
+esp_err_t r503_reg_model(r503_t *dev)
+{
+    ESP_RETURN_ON_ERROR(r503_check_dev(dev), TAG, "invalid device");
+    ESP_RETURN_ON_ERROR(r503_send_command(dev, R503_CMD_REG_MODEL, NULL, 0), TAG, "send reg model failed");
+
+    r503_packet_t ack = {0};
+    uint8_t code = 0;
+    ESP_RETURN_ON_ERROR(r503_read_ack(dev, &ack, &code), TAG, "read reg model ack failed");
+
+    return r503_map_confirm_code(code);
+}
+
+esp_err_t r503_store(r503_t *dev, uint8_t buffer_id, uint16_t model_id)
+{
+    ESP_RETURN_ON_ERROR(r503_check_dev(dev), TAG, "invalid device");
+    ESP_RETURN_ON_FALSE(buffer_id >= 1 && buffer_id <= 6, ESP_ERR_INVALID_ARG, TAG, "buffer_id must be 1..6");
+
+    uint8_t params[3] = {
+        buffer_id,
+        (uint8_t)((model_id >> 8) & 0xFF),
+        (uint8_t)(model_id & 0xFF),
+    };
+
+    ESP_RETURN_ON_ERROR(r503_send_command(dev, R503_CMD_STORE, params, sizeof(params)),
+                        TAG, "send store failed");
+
+    r503_packet_t ack = {0};
+    uint8_t code = 0;
+    ESP_RETURN_ON_ERROR(r503_read_ack(dev, &ack, &code), TAG, "read store ack failed");
+
+    return r503_map_confirm_code(code);
+}
+
+esp_err_t r503_search(r503_t *dev,
+                      uint8_t buffer_id,
+                      uint16_t start_id,
+                      uint16_t count,
+                      r503_search_result_t *out)
+{
+    ESP_RETURN_ON_ERROR(r503_check_dev(dev), TAG, "invalid device");
+    ESP_RETURN_ON_FALSE(out != NULL, ESP_ERR_INVALID_ARG, TAG, "out is NULL");
+    ESP_RETURN_ON_FALSE(buffer_id >= 1 && buffer_id <= 6, ESP_ERR_INVALID_ARG, TAG, "buffer_id must be 1..6");
+
+    uint8_t params[5] = {
+        buffer_id,
+        (uint8_t)((start_id >> 8) & 0xFF),
+        (uint8_t)(start_id & 0xFF),
+        (uint8_t)((count >> 8) & 0xFF),
+        (uint8_t)(count & 0xFF),
+    };
+
+    ESP_RETURN_ON_ERROR(r503_send_command(dev, R503_CMD_SEARCH, params, sizeof(params)),
+                        TAG, "send search failed");
+
+    r503_packet_t ack = {0};
+    uint8_t code = 0;
+    ESP_RETURN_ON_ERROR(r503_read_ack(dev, &ack, &code), TAG, "read search ack failed");
+
+    esp_err_t mapped = r503_map_confirm_code(code);
+    ESP_RETURN_ON_ERROR(mapped, TAG, "module returned error 0x%02X", code);
+
+    const uint16_t payload_len = r503_packet_payload_len(&ack);
+    ESP_RETURN_ON_FALSE(payload_len == 5, ESP_ERR_R503_PROTOCOL, TAG, "unexpected search payload len: %u", payload_len);
+
+    out->match_id = be16_from_payload(&ack.payload[1]);
+    out->match_score = be16_from_payload(&ack.payload[3]);
+
+    return ESP_OK;
+}
