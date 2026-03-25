@@ -1,0 +1,22 @@
+#pragma once
+
+#include "esp_err.h"
+
+#define ESP_ERR_R503_BASE               0x7000
+
+#define ESP_ERR_R503_PACKET             (ESP_ERR_R503_BASE + 1)
+#define ESP_ERR_R503_ACK                (ESP_ERR_R503_BASE + 2)
+#define ESP_ERR_R503_NO_FINGER          (ESP_ERR_R503_BASE + 3)
+#define ESP_ERR_R503_BAD_IMAGE          (ESP_ERR_R503_BASE + 4)
+#define ESP_ERR_R503_NO_MATCH           (ESP_ERR_R503_BASE + 5)
+#define ESP_ERR_R503_NOT_FOUND          (ESP_ERR_R503_BASE + 6)
+#define ESP_ERR_R503_WRONG_PASSWORD     (ESP_ERR_R503_BASE + 7)
+#define ESP_ERR_R503_FLASH              (ESP_ERR_R503_BASE + 8)
+#define ESP_ERR_R503_TIMEOUT            (ESP_ERR_R503_BASE + 9)
+#define ESP_ERR_R503_ALREADY_EXISTS     (ESP_ERR_R503_BASE + 10)
+#define ESP_ERR_R503_SENSOR_ERROR       (ESP_ERR_R503_BASE + 11)
+#define ESP_ERR_R503_LIBRARY_FULL       (ESP_ERR_R503_BASE + 12)
+#define ESP_ERR_R503_LIBRARY_EMPTY      (ESP_ERR_R503_BASE + 13)
+#define ESP_ERR_R503_BAD_LOCATION       (ESP_ERR_R503_BASE + 14)
+#define ESP_ERR_R503_NOT_READY          (ESP_ERR_R503_BASE + 15)
+#define ESP_ERR_R503_PROTOCOL           (ESP_ERR_R503_BASE + 16)

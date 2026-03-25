@@ -1,0 +1,96 @@
+#pragma once
+
+#include <stdint.h>
+
+#define R503_HEADER                  0xEF01U
+
+#define R503_DEFAULT_ADDRESS         0xFFFFFFFFUL
+#define R503_DEFAULT_PASSWORD        0x00000000UL
+#define R503_DEFAULT_BAUDRATE        57600
+#define R503_DEFAULT_TIMEOUT_MS      1000
+#define R503_DEFAULT_UART_BUF_SIZE   512
+
+#define R503_READY_BYTE              0x55
+
+typedef enum {
+    R503_PID_COMMAND = 0x01,
+    R503_PID_DATA    = 0x02,
+    R503_PID_ACK     = 0x07,
+    R503_PID_ENDDATA = 0x08,
+} r503_pid_t;
+
+typedef enum {
+    R503_CMD_GET_IMAGE        = 0x01,
+    R503_CMD_GEN_CHAR         = 0x02,
+    R503_CMD_MATCH            = 0x03,
+    R503_CMD_SEARCH           = 0x04,
+    R503_CMD_REG_MODEL        = 0x05,
+    R503_CMD_STORE            = 0x06,
+    R503_CMD_LOAD_CHAR        = 0x07,
+    R503_CMD_UP_CHAR          = 0x08,
+    R503_CMD_DOWN_CHAR        = 0x09,
+    R503_CMD_UP_IMAGE         = 0x0A,
+    R503_CMD_DOWN_IMAGE       = 0x0B,
+    R503_CMD_DELETE_CHAR      = 0x0C,
+    R503_CMD_EMPTY            = 0x0D,
+    R503_CMD_SET_SYS_PARA     = 0x0E,
+    R503_CMD_READ_SYS_PARA    = 0x0F,
+    R503_CMD_SET_PWD          = 0x12,
+    R503_CMD_VFY_PWD          = 0x13,
+    R503_CMD_GET_RANDOM_CODE  = 0x14,
+    R503_CMD_SET_ADDRESS      = 0x15,
+    R503_CMD_READ_INF_PAGE    = 0x16,
+    R503_CMD_WRITE_NOTEPAD    = 0x18,
+    R503_CMD_READ_NOTEPAD     = 0x19,
+    R503_CMD_TEMPLATE_NUM     = 0x1D,
+    R503_CMD_READ_INDEX_TABLE = 0x1F,
+    R503_CMD_GET_IMAGE_EX     = 0x28,
+    R503_CMD_CANCEL           = 0x30,
+    R503_CMD_AUTO_ENROLL      = 0x31,
+    R503_CMD_AUTO_IDENTIFY    = 0x32,
+    R503_CMD_AURA_LED         = 0x35,
+    R503_CMD_CHECK_SENSOR     = 0x36,
+    R503_CMD_GET_ALG_VER      = 0x39,
+    R503_CMD_GET_FW_VER       = 0x3A,
+    R503_CMD_READ_PROD_INFO   = 0x3C,
+    R503_CMD_SOFT_RESET       = 0x3D,
+    R503_CMD_HANDSHAKE        = 0x40,
+} r503_command_t;
+
+/* Module confirmation codes */
+typedef enum {
+    R503_CONFIRM_OK                = 0x00,
+    R503_CONFIRM_PACKET_ERROR      = 0x01,
+    R503_CONFIRM_NO_FINGER         = 0x02,
+    R503_CONFIRM_ENROLL_FAIL       = 0x03,
+    R503_CONFIRM_IMAGE_MESSY       = 0x06,
+    R503_CONFIRM_FEATURE_FAIL      = 0x07,
+    R503_CONFIRM_NO_MATCH          = 0x08,
+    R503_CONFIRM_NOT_FOUND         = 0x09,
+    R503_CONFIRM_MERGE_FAIL        = 0x0A,
+    R503_CONFIRM_BAD_LOCATION      = 0x0B,
+    R503_CONFIRM_LOAD_FAIL         = 0x0C,
+    R503_CONFIRM_UPLOAD_FAIL       = 0x0D,
+    R503_CONFIRM_RECEIVE_FAIL      = 0x0E,
+    R503_CONFIRM_UPLOAD_IMAGE_FAIL = 0x0F,
+    R503_CONFIRM_DELETE_FAIL       = 0x10,
+    R503_CONFIRM_EMPTY_FAIL        = 0x11,
+    R503_CONFIRM_WRONG_PASSWORD    = 0x13,
+    R503_CONFIRM_INVALID_IMAGE     = 0x15,
+    R503_CONFIRM_FLASH_ERROR       = 0x18,
+    R503_CONFIRM_ADDRESS_ERROR     = 0x20,
+    R503_CONFIRM_PASSWORD_REQUIRED = 0x21,
+    R503_CONFIRM_TEMPLATE_EMPTY    = 0x22,
+    R503_CONFIRM_LIBRARY_EMPTY     = 0x24,
+    R503_CONFIRM_TIMEOUT           = 0x26,
+    R503_CONFIRM_ALREADY_EXISTS    = 0x27,
+    R503_CONFIRM_SENSOR_ERROR      = 0x29,
+    R503_CONFIRM_INVALID_REGISTER  = 0x1A,
+    R503_CONFIRM_BAD_REGISTER_CONF = 0x1B,
+    R503_CONFIRM_BAD_NOTEPAD_PAGE  = 0x1C,
+    R503_CONFIRM_COMM_ERROR        = 0x1D,
+    R503_CONFIRM_LIBRARY_FULL      = 0x1F,
+    R503_CONFIRM_UNSUPPORTED       = 0xFC,
+    R503_CONFIRM_HW_ERROR          = 0xFD,
+    R503_CONFIRM_EXEC_FAIL         = 0xFE,
+} r503_confirm_code_t;
