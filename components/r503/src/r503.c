@@ -428,3 +428,244 @@ esp_err_t r503_search(r503_t *dev,
 
     return ESP_OK;
 }
+
+static esp_err_t r503_wait_for_finger_and_gen_char(r503_t *dev,
+                                                   uint8_t buffer_id,
+                                                   uint32_t capture_timeout_ms,
+                                                   uint32_t poll_delay_ms)
+{
+    const TickType_t start = xTaskGetTickCount();
+    const TickType_t timeout_ticks = pdMS_TO_TICKS(capture_timeout_ms);
+
+    while (1) {
+        esp_err_t err = r503_get_image_ex(dev);
+        if (err == ESP_OK) {
+            return r503_gen_char(dev, buffer_id);
+        }
+
+        if (err != ESP_ERR_R503_NO_FINGER) {
+            return err;
+        }
+
+        if ((xTaskGetTickCount() - start) >= timeout_ticks) {
+            return ESP_ERR_TIMEOUT;
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(poll_delay_ms));
+    }
+}
+
+static esp_err_t r503_wait_finger_removed_internal(r503_t *dev,
+                                                   uint32_t timeout_ms,
+                                                   uint32_t poll_delay_ms)
+{
+    const TickType_t start = xTaskGetTickCount();
+    const TickType_t timeout_ticks = pdMS_TO_TICKS(timeout_ms);
+
+    while (1) {
+        esp_err_t err = r503_get_image_ex(dev);
+        if (err == ESP_ERR_R503_NO_FINGER) {
+            vTaskDelay(pdMS_TO_TICKS(300));
+            return ESP_OK;
+        }
+
+        if (err != ESP_OK) {
+            return err;
+        }
+
+        if ((xTaskGetTickCount() - start) >= timeout_ticks) {
+            return ESP_ERR_TIMEOUT;
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(poll_delay_ms));
+    }
+}
+
+esp_err_t r503_enroll_manual(r503_t *dev, const r503_enroll_config_t *cfg)
+{
+    ESP_RETURN_ON_ERROR(r503_check_dev(dev), TAG, "invalid device");
+    ESP_RETURN_ON_FALSE(cfg != NULL, ESP_ERR_INVALID_ARG, TAG, "cfg is NULL");
+
+    const uint32_t capture_timeout_ms = cfg->capture_timeout_ms ? cfg->capture_timeout_ms : 10000;
+    const uint32_t poll_delay_ms = cfg->poll_delay_ms ? cfg->poll_delay_ms : 150;
+
+    ESP_RETURN_ON_ERROR(
+        r503_wait_for_finger_and_gen_char(dev, 1, capture_timeout_ms, poll_delay_ms),
+        TAG, "first capture failed"
+    );
+
+    ESP_RETURN_ON_ERROR(
+        r503_wait_finger_removed_internal(dev, capture_timeout_ms, poll_delay_ms),
+        TAG, "waiting finger removal failed"
+    );
+
+    ESP_RETURN_ON_ERROR(
+        r503_wait_for_finger_and_gen_char(dev, 2, capture_timeout_ms, poll_delay_ms),
+        TAG, "second capture failed"
+    );
+
+    ESP_RETURN_ON_ERROR(r503_reg_model(dev), TAG, "reg model failed");
+    ESP_RETURN_ON_ERROR(r503_store(dev, 1, cfg->model_id), TAG, "store failed");
+
+    return ESP_OK;
+}
+
+esp_err_t r503_identify_once(r503_t *dev,
+                             uint16_t start_id,
+                             uint16_t count,
+                             r503_search_result_t *out)
+{
+    ESP_RETURN_ON_ERROR(r503_check_dev(dev), TAG, "invalid device");
+    ESP_RETURN_ON_FALSE(out != NULL, ESP_ERR_INVALID_ARG, TAG, "out is NULL");
+
+    ESP_RETURN_ON_ERROR(
+        r503_wait_for_finger_and_gen_char(dev, 1, 10000, 150),
+        TAG, "capture for identify failed"
+    );
+
+    return r503_search(dev, 1, start_id, count, out);
+}
+
+esp_err_t r503_delete(r503_t *dev, uint16_t start_id, uint16_t count)
+{
+    ESP_RETURN_ON_ERROR(r503_check_dev(dev), TAG, "invalid device");
+    ESP_RETURN_ON_FALSE(count > 0, ESP_ERR_INVALID_ARG, TAG, "count must be > 0");
+
+    uint8_t params[4] = {
+        (uint8_t)((start_id >> 8) & 0xFF),
+        (uint8_t)(start_id & 0xFF),
+        (uint8_t)((count >> 8) & 0xFF),
+        (uint8_t)(count & 0xFF),
+    };
+
+    ESP_RETURN_ON_ERROR(
+        r503_send_command(dev, R503_CMD_DELETE_CHAR, params, sizeof(params)),
+        TAG,
+        "send delete failed"
+    );
+
+    r503_packet_t ack = {0};
+    uint8_t code = 0;
+    ESP_RETURN_ON_ERROR(r503_read_ack(dev, &ack, &code), TAG, "read delete ack failed");
+
+    return r503_map_confirm_code(code);
+}
+
+esp_err_t r503_empty_library(r503_t *dev)
+{
+    ESP_RETURN_ON_ERROR(r503_check_dev(dev), TAG, "invalid device");
+
+    ESP_RETURN_ON_ERROR(
+        r503_send_command(dev, R503_CMD_EMPTY, NULL, 0),
+        TAG,
+        "send empty library failed"
+    );
+
+    r503_packet_t ack = {0};
+    uint8_t code = 0;
+    ESP_RETURN_ON_ERROR(r503_read_ack(dev, &ack, &code), TAG, "read empty library ack failed");
+
+    return r503_map_confirm_code(code);
+}
+
+esp_err_t r503_read_index_table(r503_t *dev, uint8_t page_index, r503_index_table_t *out)
+{
+    ESP_RETURN_ON_ERROR(r503_check_dev(dev), TAG, "invalid device");
+    ESP_RETURN_ON_FALSE(out != NULL, ESP_ERR_INVALID_ARG, TAG, "out is NULL");
+    ESP_RETURN_ON_FALSE(page_index <= 3, ESP_ERR_INVALID_ARG, TAG, "page_index must be 0..3");
+
+    uint8_t params[1] = { page_index };
+
+    ESP_RETURN_ON_ERROR(
+        r503_send_command(dev, R503_CMD_READ_INDEX_TABLE, params, sizeof(params)),
+        TAG,
+        "send read index table failed"
+    );
+
+    r503_packet_t ack = {0};
+    uint8_t code = 0;
+    ESP_RETURN_ON_ERROR(r503_read_ack(dev, &ack, &code), TAG, "read index table ack failed");
+
+    esp_err_t mapped = r503_map_confirm_code(code);
+    ESP_RETURN_ON_ERROR(mapped, TAG, "module returned error 0x%02X", code);
+
+    const uint16_t payload_len = r503_packet_payload_len(&ack);
+    ESP_RETURN_ON_FALSE(payload_len == 33, ESP_ERR_R503_PROTOCOL, TAG,
+                        "unexpected index table payload len: %u", payload_len);
+
+    out->page_index = page_index;
+    memcpy(out->bits, &ack.payload[1], 32);
+
+    return ESP_OK;
+}
+
+static bool r503_index_bit_is_set(const uint8_t *bits, uint16_t local_id)
+{
+    uint16_t byte_index = local_id / 8;
+    uint8_t bit_index = local_id % 8;
+
+    return ((bits[byte_index] >> bit_index) & 0x01) != 0;
+}
+
+esp_err_t r503_find_next_free_id(r503_t *dev, uint16_t *out_id)
+{
+    ESP_RETURN_ON_ERROR(r503_check_dev(dev), TAG, "invalid device");
+    ESP_RETURN_ON_FALSE(out_id != NULL, ESP_ERR_INVALID_ARG, TAG, "out_id is NULL");
+
+    r503_sys_params_t params = {0};
+    ESP_RETURN_ON_ERROR(r503_read_sys_params(dev, &params), TAG, "read sys params failed");
+
+    uint16_t capacity = params.capacity;
+    if (capacity == 0) {
+        return ESP_ERR_R503_LIBRARY_EMPTY;
+    }
+
+    uint16_t max_pages = (capacity + 255) / 256;
+    if (max_pages > 4) {
+        max_pages = 4;
+    }
+
+    for (uint16_t page = 0; page < max_pages; page++) {
+        r503_index_table_t table = {0};
+        ESP_RETURN_ON_ERROR(r503_read_index_table(dev, (uint8_t)page, &table),
+                            TAG, "read index table page %u failed", page);
+
+        uint16_t page_base = page * 256;
+        uint16_t page_limit = capacity - page_base;
+        if (page_limit > 256) {
+            page_limit = 256;
+        }
+
+        for (uint16_t local_id = 0; local_id < page_limit; local_id++) {
+            if (!r503_index_bit_is_set(table.bits, local_id)) {
+                *out_id = page_base + local_id;
+                return ESP_OK;
+            }
+        }
+    }
+
+    return ESP_ERR_R503_LIBRARY_FULL;
+}
+
+esp_err_t r503_enroll_manual_next_free(r503_t *dev,
+                                       uint16_t *saved_id,
+                                       uint32_t capture_timeout_ms,
+                                       uint32_t poll_delay_ms)
+{
+    ESP_RETURN_ON_ERROR(r503_check_dev(dev), TAG, "invalid device");
+    ESP_RETURN_ON_FALSE(saved_id != NULL, ESP_ERR_INVALID_ARG, TAG, "saved_id is NULL");
+
+    uint16_t next_id = 0;
+    ESP_RETURN_ON_ERROR(r503_find_next_free_id(dev, &next_id), TAG, "find next free id failed");
+
+    r503_enroll_config_t cfg = {
+        .model_id = next_id,
+        .capture_timeout_ms = (uint16_t)capture_timeout_ms,
+        .poll_delay_ms = (uint16_t)poll_delay_ms,
+    };
+
+    ESP_RETURN_ON_ERROR(r503_enroll_manual(dev, &cfg), TAG, "manual enroll failed");
+
+    *saved_id = next_id;
+    return ESP_OK;
+}

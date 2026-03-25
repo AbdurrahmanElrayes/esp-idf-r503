@@ -46,3 +46,14 @@ typedef struct {
     uint8_t payload[256];
     uint16_t checksum;
 } r503_packet_t;
+
+typedef struct {
+    uint16_t model_id;
+    uint16_t capture_timeout_ms;
+    uint16_t poll_delay_ms;
+} r503_enroll_config_t;
+
+typedef struct {
+    uint8_t page_index;
+    uint8_t bits[32];
+} r503_index_table_t;

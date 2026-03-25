@@ -29,6 +29,22 @@ esp_err_t r503_search(r503_t *dev,
 
 const char *r503_err_to_name(esp_err_t err);
 
+esp_err_t r503_enroll_manual(r503_t *dev, const r503_enroll_config_t *cfg);
+esp_err_t r503_identify_once(r503_t *dev,
+                             uint16_t start_id,
+                             uint16_t count,
+                             r503_search_result_t *out);
+ 
+esp_err_t r503_delete(r503_t *dev, uint16_t start_id, uint16_t count);
+esp_err_t r503_empty_library(r503_t *dev);
+esp_err_t r503_read_index_table(r503_t *dev, uint8_t page_index, r503_index_table_t *out);
+esp_err_t r503_find_next_free_id(r503_t *dev, uint16_t *out_id);
+
+esp_err_t r503_enroll_manual_next_free(r503_t *dev,
+                                       uint16_t *saved_id,
+                                       uint32_t capture_timeout_ms,
+                                       uint32_t poll_delay_ms);
+                                       
 #ifdef __cplusplus
 }
 #endif
