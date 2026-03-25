@@ -13,5 +13,7 @@
     "--background-index",
     "--query-driver=**",
     "--compile-commands-dir=/Users/elrayes/Projects/IOT/libraries/esp-idf-r503/build"
-  ]
+  ],
+  "idf.flashType": "UART",
+  "idf.monitorPort": "/dev/tty.usbserial-0001"
 }
