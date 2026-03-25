@@ -252,3 +252,5 @@ PRs and improvements are welcome.
 ⭐ Acknowledgment
 
 Based on R503 protocol documentation and real device testing.
+
+---
