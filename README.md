@@ -1,55 +1,64 @@
-📦 esp-idf-r503
+# 📦 esp-idf-r503
 
-ESP-IDF component for interfacing with R503 / R5xx fingerprint sensors over UART.
+ESP-IDF component for interfacing with **R503 / R5xx fingerprint sensors** over UART.
 
 Supports enrollment, identification, template management, device info, and Aura LED control.
 
-⸻
+---
 
-✨ Features
-	•	✅ UART communication (ESP-IDF native)
-	•	✅ Full packet protocol implementation
-	•	✅ Fingerprint enrollment (manual + auto ID allocation)
-	•	✅ Fingerprint identification (search)
-	•	✅ Template management:
-	•	Store / Delete
-	•	Empty library
-	•	Read index table
-	•	Find next free ID
-	•	✅ Device info:
-	•	Firmware version
-	•	Algorithm version
-	•	Product info (sensor type, size, capacity…)
-	•	✅ Aura LED control (RGB ring)
-	•	✅ Clean layered API (low-level + high-level)
+## ✨ Features
 
-⸻
+- ✅ UART communication (ESP-IDF native)
+- ✅ Full packet protocol implementation
+- ✅ Fingerprint enrollment (manual + auto ID allocation)
+- ✅ Fingerprint identification (search)
 
-🧰 Supported Hardware
-	•	R503
-	•	R503-M22
-	•	R5xx series (tested on GR192RGB sensor)
+- ✅ Template management:
+  - Store
+  - Delete
+  - Empty library
+  - Read index table
+  - Find next free ID
 
-⸻
+- ✅ Device information:
+  - Firmware version
+  - Algorithm version
+  - Product info (sensor type, size, capacity...)
 
-🔌 Wiring (ESP32 example)
+- ✅ Aura LED control (RGB ring)
 
-R503 Pin	ESP32
-VCC	5V
-GND	GND
-TX	GPIO18 (RX)
-RX	GPIO17 (TX)
+- ✅ Clean layered API (low-level + high-level)
 
-⚠️ Use 5V power for stable operation.
+---
 
-⸻
+## 🧰 Supported Hardware
 
-🚀 Quick Start
+- R503  
+- R503-M22  
+- R5xx series (tested on GR192RGB sensor)
 
-1. Add component
+---
+
+## 🔌 Wiring (ESP32 example)
+
+| R503 Pin | ESP32 |
+|---------|------|
+| VCC     | 5V   |
+| GND     | GND  |
+| TX      | GPIO18 (RX) |
+| RX      | GPIO17 (TX) |
+
+⚠️ Use **5V power** for stable operation.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Add component
 
 Clone into your project:
 
+```bash
 components/
   r503/
 
@@ -110,7 +119,7 @@ r503_aura_led_config(&sensor,
                      R503_LED_BLUE,
                      0);
 
-Suggested usage:
+Suggested LED States
 
 State	LED
 Idle	Blue breathing
@@ -198,10 +207,10 @@ r503_aura_led_config()
 ⸻
 
 ⚠️ Notes
-	•	Search returns first matching ID, not last enrolled.
+	•	Search returns first matching ID, not the last enrolled.
 	•	Some firmware versions return shorter product info payload (handled internally).
 	•	Index table bit order is LSB-first (verified in practice).
-	•	Aura LED behavior depends on sensor hardware variant.
+	•	Aura LED behavior may vary depending on hardware variant.
 
 ⸻
 
@@ -226,11 +235,12 @@ main/
 
 ⸻
 
-## 📜 License
+📜 License
 
 This project is licensed under the Apache License 2.0.
 
-See the [LICENSE](LICENSE) file for details.
+See the LICENSE￼ file for details.
+
 ⸻
 
 🤝 Contributing
