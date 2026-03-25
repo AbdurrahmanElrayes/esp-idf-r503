@@ -61,12 +61,13 @@ Clone into your project:
 ```bash
 components/
   r503/
+```
 
+---
 
-⸻
+### 2. Initialize
 
-2. Initialize
-
+```c
 r503_t sensor = {0};
 
 r503_config_t cfg = {
@@ -81,23 +82,25 @@ r503_config_t cfg = {
 ESP_ERROR_CHECK(r503_init(&sensor, &cfg));
 ESP_ERROR_CHECK(r503_handshake(&sensor));
 ESP_ERROR_CHECK(r503_verify_password(&sensor));
+```
 
+---
 
-⸻
+### 3. Enroll (auto ID)
 
-3. Enroll (auto ID)
-
+```c
 uint16_t id = 0;
 
 ESP_ERROR_CHECK(
     r503_enroll_manual_next_free(&sensor, &id, 10000, 150)
 );
+```
 
+---
 
-⸻
+### 4. Identify
 
-4. Identify
-
+```c
 r503_search_result_t result = {0};
 
 ESP_ERROR_CHECK(
@@ -107,150 +110,161 @@ ESP_ERROR_CHECK(
 printf("MATCH ID=%u score=%u\n",
        result.match_id,
        result.match_score);
+```
 
+---
 
-⸻
+## 💡 Aura LED Example
 
-💡 Aura LED Example
-
+```c
 r503_aura_led_config(&sensor,
                      R503_LED_BREATHING,
                      0x40,
                      R503_LED_BLUE,
                      0);
+```
 
-Suggested LED States
+### Suggested LED States
 
-State	LED
-Idle	Blue breathing
-Finger	Yellow
-Processing	Purple
-Success	Green
-Error	Red flashing
+| State        | LED |
+|-------------|-----|
+| Idle        | Blue breathing |
+| Finger      | Yellow |
+| Processing  | Purple |
+| Success     | Green |
+| Error       | Red flashing |
 
+---
 
-⸻
+## 🧠 API Overview
 
-🧠 API Overview
+### Lifecycle
 
-Lifecycle
-
+```c
 r503_init()
 r503_deinit()
+```
 
+---
 
-⸻
+### Core Commands
 
-Core Commands
-
+```c
 r503_handshake()
 r503_check_sensor()
 r503_verify_password()
 r503_wait_ready()
+```
 
+---
 
-⸻
+### Image / Feature
 
-Image / Feature
-
+```c
 r503_get_image()
 r503_get_image_ex()
 r503_gen_char()
 r503_reg_model()
+```
 
+---
 
-⸻
+### Template Management
 
-Template Management
-
+```c
 r503_store()
 r503_search()
 r503_delete()
 r503_empty_library()
+```
 
+---
 
-⸻
+### Index / Allocation
 
-Index / Allocation
-
+```c
 r503_read_index_table()
 r503_find_next_free_id()
+```
 
+---
 
-⸻
+### High-Level
 
-High-Level
-
+```c
 r503_enroll_manual()
 r503_enroll_manual_next_free()
 r503_identify_once()
+```
 
+---
 
-⸻
+### Device Info
 
-Device Info
-
+```c
 r503_read_sys_params()
 r503_template_count()
 r503_get_fw_version()
 r503_get_alg_version()
 r503_read_product_info()
+```
 
+---
 
-⸻
+### LED
 
-LED
-
+```c
 r503_aura_led_config()
+```
 
+---
 
-⸻
+## ⚠️ Notes
 
-⚠️ Notes
-	•	Search returns first matching ID, not the last enrolled.
-	•	Some firmware versions return shorter product info payload (handled internally).
-	•	Index table bit order is LSB-first (verified in practice).
-	•	Aura LED behavior may vary depending on hardware variant.
+- Search returns **first matching ID**, not the last enrolled.
+- Some firmware versions return **shorter product info payload** (handled internally).
+- Index table bit order is **LSB-first** (verified in practice).
+- Aura LED behavior may vary depending on hardware variant.
 
-⸻
+---
 
-📁 Project Structure
+## 📁 Project Structure
 
+```
 components/r503/
   include/
   src/
 main/
   main.c (example)
+```
 
+---
 
-⸻
+## 🛠️ Future Improvements
 
-🛠️ Future Improvements
-	•	Auto-enroll command (0x31)
-	•	Auto-identify command (0x32)
-	•	Image upload support
-	•	Async API (event-driven)
-	•	Multiple UART instances
-	•	ESPHome / Home Assistant integration
+- Auto-enroll command (0x31)
+- Auto-identify command (0x32)
+- Image upload support
+- Async API (event-driven)
+- Multiple UART instances
+- ESPHome / Home Assistant integration
 
-⸻
+---
 
-📜 License
+## 📜 License
 
 This project is licensed under the Apache License 2.0.
 
-See the LICENSE￼ file for details.
+See the [LICENSE](LICENSE) file for details.
 
-⸻
+---
 
-🤝 Contributing
+## 🤝 Contributing
 
 PRs and improvements are welcome.
 
-⸻
+---
 
-⭐ Acknowledgment
+## ⭐ Acknowledgment
 
 Based on R503 protocol documentation and real device testing.
-
----
