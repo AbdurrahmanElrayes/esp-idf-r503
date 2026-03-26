@@ -23,7 +23,7 @@ ESP-IDF component for the R503 fingerprint sensor with full support for low-leve
 ### Recommended (ESP-IDF Component Registry)
 
 ```bash
-idf.py add-dependency "elrayes/r503"
+idf.py add-dependency "abdurrahmanelrayes/r503"
 ```
 
 ---

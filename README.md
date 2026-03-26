@@ -82,7 +82,7 @@ It is designed for practical embedded applications such as:
 From your ESP-IDF project directory:
 
 ```bash
-idf.py add-dependency "elrayes/r503"
+idf.py add-dependency "abdurrahmanelrayes/r503"
 ```
 
 ### Option 2 — Manual installation
