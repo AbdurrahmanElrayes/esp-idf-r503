@@ -1,96 +1,135 @@
-# ESP-IDF R503 Fingerprint Sensor Driver
+# R503 Fingerprint Sensor Driver for ESP-IDF
 
-A clean, modular, and production-ready ESP-IDF driver for the R503 fingerprint sensor.
+A clean, modular, and production-ready ESP-IDF component for the **R503 / R5xx fingerprint sensor**.
 
-Designed for real-world embedded systems such as smart locks, access control, and home automation.
+This driver supports both **low-level fingerprint commands** and **high-level helper APIs** for enrollment, identification, template management, and Aura LED control.
+
+It is designed for practical embedded applications such as:
+
+- Smart locks
+- Access control systems
+- Door entry systems
+- Home automation
+- Home Assistant / ESP-based integrations
 
 ---
 
 ## ✨ Features
 
-### Core
-- UART-based communication (ESP-IDF native driver)
-- Full packet implementation (build / parse / checksum)
-- Robust error handling with readable error names
+### Core Communication
+- Native UART communication using ESP-IDF drivers
+- Full packet handling:
+  - packet build
+  - packet parse
+  - checksum verification
+- Robust response validation and protocol error handling
 
 ### Sensor Control
-- Initialization and handshake
+- Handshake
 - Password verification
-- System parameters (capacity, security level, etc.)
-- Firmware / algorithm version
+- Sensor health check
+- Ready-byte detection after boot (when supported by firmware)
+
+### System & Device Information
+- System parameters
+- Firmware version
+- Algorithm version
 - Product information
+- Template count
 
 ### Fingerprint Operations
-- Image capture (GetImage, GetImageEx)
-- Feature extraction (GenChar)
-- Template creation (RegModel)
-- Template storage (Store)
-- Template search (Search)
+- Image capture:
+  - `GetImage`
+  - `GetImageEx`
+- Feature extraction:
+  - `GenChar`
+- Template generation:
+  - `RegModel`
+- Template storage:
+  - `Store`
+- Template search:
+  - `Search`
 
 ### Template Management
-- Template count
-- Delete single or multiple templates
-- Clear entire database
-- Index table reading
-- Find next free ID
+- Delete one or more templates
+- Empty the entire library
+- Read index table
+- Find next free template ID
 
 ### High-Level APIs
 - Manual enrollment helper
-- Auto enrollment (firmware-driven)
-- Manual identify
-- Auto identify
+- Manual identify helper
+- Auto enrollment (sensor firmware-driven)
+- Auto identify (sensor firmware-driven)
+- Progress callbacks for auto flows
 
-### UI / Feedback
-- Aura LED control:
+### Visual Feedback
+- Aura LED control
+- Support for multiple LED modes:
   - Always on
+  - Always off
   - Breathing
   - Flashing
-  - Gradual on/off
+  - Gradual on
+  - Gradual off
 
 ---
 
-## 📁 Project Structure
+## 📦 Installation
 
+### Option 1 — ESP-IDF Component Registry (recommended)
+
+From your ESP-IDF project directory:
+
+```bash
+idf.py add-dependency "elrayes/r503"
 ```
+
+### Option 2 — Manual installation
+
+Copy the `r503` component folder into your project:
+
+```text
 components/r503/
-├── include/
-│   ├── r503.h
-│   ├── r503_defs.h
-│   └── r503_errors.h
-├── src/
-│   ├── r503.c
-│   ├── r503_core.c
-│   ├── r503_packet.c
-│   ├── r503_uart.c
-│   ├── r503_info.c
-│   ├── r503_template.c
-│   ├── r503_highlevel.c
-│   └── r503_led.c
 ```
+
+---
+
+## ⚙️ Requirements
+
+- ESP-IDF **v5.x or newer**
+- ESP32 or compatible ESP target with UART support
+- R503 / compatible R5xx fingerprint module
+
+---
+
+## 🔌 Wiring
+
+### ESP32 example
+
+| R503 Pin | ESP32 |
+|----------|-------|
+| VCC      | 3.3V  |
+| GND      | GND   |
+| TX       | GPIO18 (RX) |
+| RX       | GPIO17 (TX) |
+
+> ⚠️ Important  
+> The R503 sensor should be powered with **3.3V** when connected directly to ESP32.  
+> Feeding 5V logic directly into ESP32 GPIO pins may damage the board.
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Add the component
-
-Copy the `r503` folder into:
-
-```
-components/
-```
-
----
-
-### 2. Include
+### Include the driver
 
 ```c
 #include "r503.h"
+#include "r503_defs.h"
 ```
 
----
-
-### 3. Initialize
+### Initialize the sensor
 
 ```c
 r503_t sensor = {0};
@@ -113,26 +152,11 @@ ESP_ERROR_CHECK(r503_verify_password(&sensor));
 
 ---
 
-## 🔌 Wiring
-
-| R503 Pin | ESP32 |
-|---------|------|
-| VCC     | 3.3V |
-| GND     | GND  |
-| TX      | GPIO18 (RX) |
-| RX      | GPIO17 (TX) |
-
-> ⚠️ Important  
-> The R503 sensor must be powered with **3.3V** when connected directly to ESP32.  
-> Using 5V without level shifting may damage the ESP32 GPIO pins.
-
----
-
-## 🧠 How It Works
+## 🧠 Typical Workflows
 
 ### Manual Enrollment Flow
 
-```
+```text
 GetImage
 → GenChar(1)
 → Remove finger
@@ -142,82 +166,198 @@ GetImage
 → Store
 ```
 
----
+### Manual Identification Flow
+
+```text
+GetImage
+→ GenChar(1)
+→ Search
+→ Match ID + Score
+```
 
 ### Auto Enrollment Flow
 
-```
+Handled internally by the sensor firmware:
+
+```text
 AutoEnroll
-→ (capture + process internally)
+→ internal image capture
+→ internal feature generation
+→ internal template generation
 → Store
 ```
 
----
+### Auto Identification Flow
 
-### Identification Flow
+Handled internally by the sensor firmware:
 
-```
-GetImage
-→ GenChar
+```text
+AutoIdentify
+→ internal image capture
+→ internal feature generation
 → Search
 → Match ID + Score
 ```
 
 ---
 
-## 📦 Examples
+## 📚 Examples
 
-### basic_info
-- Read system parameters
-- Firmware & product info
+This component includes several ready-to-run examples.
 
-### manual_enroll_identify
-- Full manual enrollment flow
-- Manual search
+### 1. `basic_info`
+Reads and prints:
+- system parameters
+- template count
+- firmware version
+- algorithm version
+- product information
 
-### auto_enroll_identify
-- Fully automatic enrollment
-- Callback-based progress tracking
+### 2. `manual_enroll_identify`
+Demonstrates:
+- manual image capture
+- manual feature generation
+- manual enrollment
+- manual search
 
-### aura_led_demo
-- LED effects showcase
+### 3. `auto_enroll_identify`
+Demonstrates:
+- firmware-driven enrollment
+- firmware-driven identification
+- auto progress callbacks
 
-### delete_templates
-- Clears entire fingerprint database
+### 4. `aura_led_demo`
+Demonstrates:
+- LED colors
+- LED modes
+- visual sensor feedback effects
+
+### 5. `delete_templates`
+Demonstrates:
+- template count
+- clearing the fingerprint database
 
 > ⚠️ Warning  
-> This permanently deletes all stored fingerprints.
+> `delete_templates` permanently removes stored fingerprints.
 
 ---
 
-## ⚠️ Notes & Behavior
+## 🧩 Public API Overview
 
-- Fingerprints are stored inside the sensor (non-volatile)
-- Data persists after power loss
-- Auto commands rely on sensor firmware behavior
-- Some firmware versions return variable packet lengths (handled internally)
+### Lifecycle
+- `r503_init()`
+- `r503_deinit()`
+
+### Utility
+- `r503_err_to_name()`
+
+### Basic Communication
+- `r503_wait_ready()`
+- `r503_handshake()`
+- `r503_check_sensor()`
+- `r503_verify_password()`
+
+### Device Information
+- `r503_read_sys_params()`
+- `r503_template_count()`
+- `r503_get_fw_version()`
+- `r503_get_alg_version()`
+- `r503_read_product_info()`
+
+### Image / Feature Operations
+- `r503_get_image()`
+- `r503_get_image_ex()`
+- `r503_gen_char()`
+- `r503_reg_model()`
+
+### Template Operations
+- `r503_store()`
+- `r503_search()`
+- `r503_delete()`
+- `r503_empty_library()`
+- `r503_read_index_table()`
+- `r503_find_next_free_id()`
+
+### High-Level Helpers
+- `r503_enroll_manual()`
+- `r503_enroll_manual_next_free()`
+- `r503_identify_once()`
+- `r503_auto_enroll()`
+- `r503_auto_identify()`
+
+### LED Control
+- `r503_aura_led_config()`
+
+---
+
+## 📁 Component Structure
+
+```text
+components/r503/
+├── idf_component.yml
+├── README.md
+├── LICENSE
+├── include/
+│   ├── r503.h
+│   ├── r503_defs.h
+│   ├── r503_errors.h
+│   └── r503_types.h
+└── src/
+    ├── r503.c
+    ├── r503_core.c
+    ├── r503_packet.c
+    ├── r503_uart.c
+    ├── r503_info.c
+    ├── r503_template.c
+    ├── r503_highlevel.c
+    └── r503_led.c
+```
+
+---
+
+## ⚠️ Notes
+
+- Fingerprints are stored in the sensor's internal non-volatile memory.
+- Stored templates remain available after power loss.
+- Auto commands depend on firmware behavior inside the sensor.
+- Some firmware versions may return slightly different payload lengths; the driver handles known variations.
+- In identification results, the sensor may return the **first matching template**, not necessarily the most recently stored one.
 
 ---
 
 ## 🧪 Common Issues
 
-### No match found
-- Try adjusting finger placement
-- Check security level
+### `Ready byte not received`
+This can be normal on some firmware versions depending on power-up timing.
 
-### Bad image / noisy
-- Clean sensor surface
-- Ensure stable power supply
+### `No match found`
+- Check finger placement
+- Try lowering security level
+- Make sure the template really exists
 
-### Ready byte not received
-- Normal on some modules
+### `Bad image`
+- Clean the sensor surface
+- Use stable finger placement
+- Ensure proper power supply
+
+### UART communication problems
+- Double-check TX/RX crossover
+- Verify that the sensor TX is not feeding 5V logic into ESP32
+- Confirm baud rate and shared ground
 
 ---
 
-## ⚙️ Requirements
+## 🛠️ Development Notes
 
-- ESP-IDF v5.x+
-- ESP32 or compatible target
+This component was structured to keep responsibilities separated:
+
+- transport / protocol logic
+- information commands
+- template operations
+- high-level helpers
+- LED control
+
+That makes it easier to maintain, extend, and integrate into larger ESP-IDF projects.
 
 ---
 
@@ -225,11 +365,10 @@ GetImage
 
 Apache License 2.0
 
+See the `LICENSE` file for details.
+
 ---
 
 ## 👨‍💻 Author
 
-Built for real-world embedded systems:
-- Smart locks
-- Access control
-- Home automation (Home Assistant)
+Maintained for practical embedded use cases and real hardware testing.
